@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            html,
+            body {
+                padding: 0;
+                margin: 0;
+            }
+            ul {
+                width: 60%;
+                margin: auto;
+            }
+            li {
+                border: 1px solid transparent;
+                border-radius: 5px;
+                list-style: none;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding-right: 10px;
+                background-color: beige;
+                margin-bottom: 10px;
+            }
+            .thumnail {
+                max-width: 50px;
+                margin: 10px;
+            }
+            .bottom-text {
+                font-size: 14px;
+                color: blue;
+                padding-top: 30px;
+            }
+            .press {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                margin-left: auto;
+                padding-right: 10px;
+            }
+            .press .text {
+                font-size: 14px;
+                color: green;
+            }
+            .select-box {
+                margin: auto;
+                width: 40%;
+                height: 150px;
+                border: 2px dashed #ddd;
+                border-radius: 10px;
+                position: relative;
+                margin-top: 50px;
+                margin-bottom: 50px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .select-box input {
+                opacity: 0;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 2;
+            }
+            .select-box span {
+                display: block;
+                font-size: 32px;
+
+                color: black;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <div class="select-box">
+                <input ref="inputRef" type="file" :key="fileKey" multiple accept="image/*" @change="onChange" />
+                <span>点击选择图片或拖动图片到此处</span>
+            </div>
+
+            <div id="imageContainer">
+                <ul>
+                    <li v-for="(item,index) in imgList" :key="index">
+                        <img class="thumnail" :src="item.path" alt="" />
+                        <span class="bottom-text">源文件：{{biteTransfer(item.oldSize)}} </span>
+                        <p class="press" v-show="item.downloadUrl">
+                            <span class="text">压缩已完成</span>
+                            <span class="text">大小：{{biteTransfer(item.newSize)}}</span>
+                            <span class="text"
+                                >压缩率：{{(100- (item.newSize / item.oldSize * 100)).toFixed(2) }} %</span
+                            >
+                        </p>
+                        <button @click="download(item)">下载</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+        <script>
+            const { createApp, ref, computed } = Vue;
+
+            createApp({
+                setup() {
+                    const imgList = ref([]);
+
+                    const fileKey = ref(Date.now());
+
+                    const biteTransfer = (num) => {
+                        let temp = num / 1024;
+                        if (temp > 1024) {
+                            return (temp / 1024).toFixed(2) + "MB";
+                        } else {
+                            return temp.toFixed(2) + "KB";
+                        }
+                    };
+
+                    const download = (file) => {
+                        const a = document.createElement("a");
+                        a.href = file.downloadUrl;
+                        a.download = file.filename;
+                        a.click();
+                    };
+                    const onChange = (e) => {
+                        console.log("日志输出", e.target.files);
+                        const result = e.target.files || [];
+                        for (let i = 0; i < result.length; i++) {
+                            let file = result[i];
+                            if (file && file.type.startsWith("image/")) {
+                                let id = Date.now();
+                                imgList.value.push({
+                                    id,
+                                    path: URL.createObjectURL(file)
+                                });
+                                upLoad(file, id);
+                            } else {
+                                alert("请选择一个有效的图片文件。");
+                            }
+                        }
+                    };
+                    // 上送图片
+                    const upLoad = (file, id) => {
+                        const formData = new FormData();
+
+                        formData.set("file", file);
+                        fetch("/upload", {
+                            method: "POST",
+                            body: formData
+                        })
+                            .then((response) => {
+                                if (!response.ok) {
+                                    throw new Error("Network response was not ok");
+                                }
+                                return response.json();
+                            })
+
+                            .then((res) => {
+                                if (res.code === 200) {
+                                    imgList.value = imgList.value.map((item, index) => {
+                                        if (item.id === id) {
+                                            item = {
+                                                ...item,
+                                                filename: res.data.file.filename,
+                                                oldSize: res.data.file.size,
+                                                newSize: res.data.imgInfo.size,
+                                                downloadUrl: res.data.imgInfo.downloadPath
+                                            };
+                                        }
+                                        return item;
+                                    });
+                                    fileKey.value = Date.now();
+                                    console.log("Success:", res);
+                                }
+                            })
+                            .catch((error) => {
+                                console.error("Error:", error);
+                            });
+                    };
+
+                    return {
+                        imgList,
+                        fileKey,
+                        onChange,
+                        download,
+                        biteTransfer
+                    };
+                }
+            }).mount("#app");
+
+            // 请求进度
+            function trackProgress(response) {
+                const contentLength = response.headers.get("Content-Length");
+                console.log("日志输出xxx", response.headers, contentLength);
+                let receivedLength = 0;
+                const reader = response.body.getReader();
+
+                return new Promise((resolve, reject) => {
+                    const process = () => {
+                        reader.read().then(({ value, done }) => {
+                            if (done) {
+                                resolve();
+                            } else {
+                                receivedLength += value.length;
+                                console.log(`Progress: ${(receivedLength / contentLength) * 100.0}%`);
+                                process();
+                            }
+                        }, reject);
+                    };
+                    process();
+                });
+            }
+        </script>
+    </body>
+</html>
