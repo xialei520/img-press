@@ -73,15 +73,26 @@
 
                 color: black;
             }
+            .total-download {
+                text-align: right;
+                width: 40%;
+                margin: auto;
+                height: 60px;
+                line-height: 1;
+            }
+            .total-download button {
+            }
         </style>
     </head>
     <body>
         <div id="app">
-            <div class="select-box">
+            <div class="select-box" @dragover.stop.prevent="dragover" @drop.stop.prevent="drop">
                 <input ref="inputRef" type="file" :key="fileKey" multiple accept="image/*" @change="onChange" />
                 <span>点击选择图片或拖动图片到此处</span>
             </div>
-
+            <p class="total-download" v-show="imgList.length > 0">
+                <button @click="totalDownload">全部下载</button>
+            </p>
             <div id="imageContainer">
                 <ul>
                     <li v-for="(item,index) in imgList" :key="index">
@@ -109,8 +120,37 @@
                     const imgList = ref([]);
 
                     const fileKey = ref(Date.now());
+                    const randomNum = generateRandomString(16);
+                    // 全部下载
+                    const totalDownload = () => {
+                        fetch("/download", {
+                            method: "POST",
+                            headers: {
+                                "content-type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                randomNum
+                            })
+                        })
+                            .then((response) => {
+                                if (!response.ok) {
+                                    throw new Error("Network response was not ok");
+                                }
+                                return response.json();
+                            })
 
+                            .then((res) => {
+                                res.data.url &&
+                                    download({
+                                        downloadUrl: res.data.url,
+                                        filename: "source.zip"
+                                    });
+                            });
+                    };
+
+                    // 字节转换
                     const biteTransfer = (num) => {
+                        if (!num) return "--";
                         let temp = num / 1024;
                         if (temp > 1024) {
                             return (temp / 1024).toFixed(2) + "MB";
@@ -118,16 +158,20 @@
                             return temp.toFixed(2) + "KB";
                         }
                     };
-
+                    // 图片下载
                     const download = (file) => {
                         const a = document.createElement("a");
                         a.href = file.downloadUrl;
                         a.download = file.filename;
                         a.click();
                     };
+                    // input change事件
                     const onChange = (e) => {
-                        console.log("日志输出", e.target.files);
                         const result = e.target.files || [];
+                        batchFileHandler(result);
+                    };
+                    // 批量文件处理
+                    const batchFileHandler = (result) => {
                         for (let i = 0; i < result.length; i++) {
                             let file = result[i];
                             if (file && file.type.startsWith("image/")) {
@@ -142,14 +186,18 @@
                             }
                         }
                     };
-                    // 上送图片
+                    // 上传图片
                     const upLoad = (file, id) => {
                         const formData = new FormData();
 
-                        formData.set("file", file);
+                        formData.append("file", file);
+
                         fetch("/upload", {
                             method: "POST",
-                            body: formData
+                            body: formData,
+                            headers: {
+                                randomNum
+                            }
                         })
                             .then((response) => {
                                 if (!response.ok) {
@@ -180,13 +228,34 @@
                                 console.error("Error:", error);
                             });
                     };
+                    // 生成随机数
+                    function generateRandomString(length) {
+                        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"; // 可选字符集
+                        let result = "";
+                        for (let i = 0; i < length; i++) {
+                            const randomIndex = Math.floor(Math.random() * characters.length);
+                            result += characters[randomIndex];
+                        }
+                        return result;
+                    }
+
+                    // 拖动图片
+                    const dragover = (e) => {};
+                    // 拖动图片放下
+                    const drop = (e) => {
+                        var files = event.dataTransfer.files;
+                        batchFileHandler(files);
+                    };
 
                     return {
                         imgList,
                         fileKey,
                         onChange,
                         download,
-                        biteTransfer
+                        biteTransfer,
+                        dragover,
+                        drop,
+                        totalDownload
                     };
                 }
             }).mount("#app");

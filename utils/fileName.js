@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 function getFileName(fileName) {
-    const filePath = path.join(process.cwd(), `uploads/${fileName}`);
+    const filePath = path.join(process.cwd(), `uploads/images/${fileName}`);
 
     if (fs.existsSync(filePath)) {
         const result = fileName.match(/(?<=.*\_)\d+(?=\.)/);

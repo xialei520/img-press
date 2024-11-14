@@ -5,18 +5,27 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node app.js",
-        "serve": "node server.js"
+        "start": "nodemon app.js",
+        "serve": "nodemon server.js"
     },
     "author": "",
     "license": "ISC",
+    "engines": {
+        "node": ">=18.19.0"
+    },
     "dependencies": {
+        "archiver": "3.0.0",
+        "imagemin": "^9.0.0",
+        "imagemin-jpegtran": "^8.0.0",
+        "imagemin-pngquant": "^10.0.0",
         "koa": "^2.15.3",
         "koa-body": "^6.0.1",
         "koa-bodyparser": "^4.4.1",
         "koa-multer": "^1.0.2",
         "koa-router": "^13.0.1",
         "koa-static": "^5.0.0",
+        "nodemon": "^3.1.7",
+        "rimraf": "^6.0.1",
         "sharp": "^0.33.5"
     }
 }

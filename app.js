@@ -4,17 +4,17 @@ const path = require("path");
 
 // 图片路径和压缩后的路径
 
-let sourceDir = fs.readdirSync(path.resolve(__dirname, "uploads"));
+let sourceDir = fs.readdirSync(path.resolve(__dirname, "uploads/images"));
 
 function imgPress(item) {
     return new Promise((resolve, reject) => {
-        let imgSourcePath = path.resolve(__dirname, `uploads/${item}`);
-        let imgDistPath = path.resolve(__dirname, `dist/${item}`);
+        let imgSourcePath = path.resolve(__dirname, `uploads/images/${item}`);
+        let imgDistPath = path.resolve(__dirname, `dest/images/${item}`);
         const extName = path.extname(imgSourcePath)?.substring(1);
 
         // 压缩图片
         sharp(imgSourcePath)
-            .toFormat(extName, { quality: 50, progressive: true }) // 设置压缩质量，1-100
+            .toFormat(extName, { quality: 40 }) // 设置压缩质量，1-100
             .toFile(imgDistPath, (err, info) => {
                 if (err) {
                     console.error("An error occurred:", err);
