@@ -15,8 +15,10 @@ const urlRouter = require("./router");
 
 const port = 8080,
     host = ip;
+
 // 执行定时删除任务
 timeTask();
+
 app.use(async (ctx, next) => {
     if (ctx.request.url === "/") {
         ctx.redirect("/index.html");

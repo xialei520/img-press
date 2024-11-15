@@ -19,15 +19,15 @@ function getLocalIp() {
 
 function mkdir(filePath) {
     if (!filePath) return;
-    const separator = path.sep;
-    let arr = filePath.split(separator);
-    let pathStr = "";
-    for (let i = 0; i < arr.length; i++) {
-        pathStr += `${pathStr === "" ? "" : separator}${arr[i]}`;
 
-        if (!fs.existsSync(pathStr)) {
-            fs.mkdirSync(pathStr);
-        }
+    let arr = [];
+    while (!fs.existsSync(filePath)) {
+        arr.push(filePath);
+        filePath = path.dirname(filePath);
+    }
+
+    for (let i = arr.length - 1; i >= 0; i--) {
+        fs.mkdirSync(arr[i]);
     }
 }
 // 获取当前日期
