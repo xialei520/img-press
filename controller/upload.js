@@ -11,7 +11,7 @@ module.exports = async function (ctx, next) {
     try {
         await imgPress(fileName, uploadDir);
         const filePath = getFilePath({ rootName: "dest", uploadDir, fileName });
-
+        console.log("filePath", filePath);
         // 异步读取文件信息
         const statInfo = fs.statSync(filePath);
 

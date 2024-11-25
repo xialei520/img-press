@@ -41,9 +41,9 @@ function getDate() {
 // 获取文件路径
 function getFilePath({ rootName = "uploads", uploadDir, fileName }) {
     if (fileName) {
-        return path.resolve(process.cwd(), `${rootName}/images/${uploadDir}}/${fileName}`);
+        return path.resolve(process.cwd(), `${rootName}/images/${uploadDir}/${fileName}`);
     } else {
-        return path.resolve(process.cwd(), `${rootName}/images/${uploadDir}}`);
+        return path.resolve(process.cwd(), `${rootName}/images/${uploadDir}`);
     }
 }
 

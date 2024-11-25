@@ -93,7 +93,7 @@
             <p class="total-download" v-show="imgList.length > 0">
                 <button @click="totalDownload">全部下载</button>
             </p>
-            <div id="imageContainer">
+            <div id="imageContainer" v-if="imgList.length > 0">
                 <ul>
                     <li v-for="(item,index) in imgList" :key="index">
                         <img class="thumnail" :src="item.path" alt="" />
